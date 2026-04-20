@@ -8,7 +8,7 @@ import moa.core.StringUtils;
 /**
  * Logistic regression for classification
  */
-public class LogisticRegressionClassifier extends AbstractClassifier {
+public class LogisticRegressionClassifier extends AbstractClassifier implements MultiClassClassifier{
 
     /**
      * Maximum number of weights to be printed by getModelDescription function
