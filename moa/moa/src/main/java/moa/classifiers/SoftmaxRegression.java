@@ -18,7 +18,7 @@
  *    along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package moa.classifiers.functions;
+package moa.classifiers;
 
 import moa.classifiers.AbstractClassifier;
 import moa.classifiers.MultiClassClassifier;
@@ -43,15 +43,17 @@ import com.yahoo.labs.samoa.instances.Instance;
  *
  * <p>Parameters:</p> <ul>
  * <li>-r : Learning rate for feature weights</li>
+ * <li>-b : Learning rate for bias intercept</li>
  * <li>-l : L2 regularization penalty</li>
+ * <li>-i : Initial bias value</li>
  * </ul>
  *
  * <h3>Algorithm Overview</h3>
  * <ul>
- * <li><b>Forward pass:</b> z_k = w_k · x; p_k = exp(z_k) / Σ exp(z_j)</li>
+ * <li><b>Forward pass:</b> z_k = w_k · x + b_k; p_k = exp(z_k) / Σ exp(z_j)</li>
  * <li><b>Loss:</b> Cross-entropy = - Σ I(y=k) * log(p_k)</li>
- * <li><b>Gradient:</b> ∇L_k = (p_k - I(y=k))·x (for weights)</li>
- * <li><b>Update:</b> w_k ← w_k · (1 - lr·λ) - lr·∇L_k (with L2 weight decay)</li>
+ * <li><b>Gradient:</b> ∇L_k = (p_k - I(y=k))·x (for weights); (p_k - I(y=k)) (for bias)</li>
+ * <li><b>Update:</b> w_k ← w_k · (1 - lr·λ) - lr·∇L_k (with L2 weight decay); b_k ← b_k - lr_b·∇L_k (no regularization)</li>
  * </ul>
  *
  * @author Christian Carstens (christianthomas.carstens@mail.polimi.it)
@@ -75,11 +77,19 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
     // ---------------------------------------------------------------
 
     /**
-     * Learning rate used to update the feature weights.
+     * Learning rate used to update the feature weights (not used for the bias).
      */
     public FloatOption learningRateOption = new FloatOption(
             "learningRate", 'r',
             "Learning rate for SGD weight updates.",
+            0.01, 0.0, Double.MAX_VALUE);
+
+    /**
+     * Learning rate used to update the intercept (bias term).
+     */
+    public FloatOption biasLearningRateOption = new FloatOption(
+            "biasLearningRate", 'b',
+            "Learning rate for bias (intercept). If 0, the intercept is not updated.",
             0.01, 0.0, Double.MAX_VALUE);
 
     /**
@@ -90,6 +100,14 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
             "L2 regularization parameter (weight decay). Pushes weights towards 0.",
             0.0, 0.0, Double.MAX_VALUE);
 
+    /**
+     * Initial value for the bias (intercept).
+     */
+    public FloatOption initialBiasOption = new FloatOption(
+            "initialBias", 'i',
+            "Initial value for the bias (intercept).",
+            0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+
     // ---------------------------------------------------------------
     // Model state
     // ---------------------------------------------------------------
@@ -98,6 +116,11 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
      * One weight vector per class. Index k corresponds to class k.
      */
     protected DoubleVector[] weightsSet;
+
+    /**
+     * One bias (intercept) per class. Index k corresponds to class k.
+     */
+    protected double[] biases;
 
     /**
      * Number of classes seen/supported.
@@ -124,6 +147,7 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
     @Override
     public void resetLearningImpl() {
         this.weightsSet = null;
+        this.biases = null;
         this.numClasses = 0;
 
         // Read hyperparameters
@@ -142,18 +166,25 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
 
         int newNumClasses = requiredClasses;
         DoubleVector[] newWeightsSet = new DoubleVector[newNumClasses];
+        double[] newBiases = new double[newNumClasses];
 
         // Copy existing state
         if (this.weightsSet != null) {
             System.arraycopy(this.weightsSet, 0, newWeightsSet, 0, this.numClasses);
         }
+        if (this.biases != null) {
+            System.arraycopy(this.biases, 0, newBiases, 0, this.numClasses);
+        }
 
         // Initialize new components
+        double initialBias = this.initialBiasOption.getValue();
         for (int i = this.numClasses; i < newNumClasses; i++) {
             newWeightsSet[i] = new DoubleVector();
+            newBiases[i] = initialBias;
         }
 
         this.weightsSet = newWeightsSet;
+        this.biases = newBiases;
         this.numClasses = newNumClasses;
     }
 
@@ -165,7 +196,7 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
             return 0.0;
         }
 
-        double result = 0.0;
+        double result = this.biases[classIndex];
         DoubleVector classWeights = this.weightsSet[classIndex];
 
         for (int i = 0; i < inst.numValues(); i++) {
@@ -213,10 +244,15 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
             probs[k] /= sumExp;
         }
 
-        // 3. Update weights for each class
+        // 3. Update weights and biases for each class
+        double lrBias = this.biasLearningRateOption.getValue();
+
         for (int k = 0; k < this.numClasses; k++) {
             double target = (k == targetClass) ? 1.0 : 0.0;
             double lossGradient = (probs[k] - target) * inst.weight();
+
+            // Gradient descent update of the bias (no regularization)
+            this.biases[k] -= lrBias * lossGradient;
 
             DoubleVector classWeights = this.weightsSet[k];
 
@@ -291,7 +327,9 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
         return new Measurement[] {
                 new Measurement("num classes", this.numClasses),
                 new Measurement("num weights total", this.numClasses
-                        * (this.weightsSet != null && this.weightsSet.length > 0 ? this.weightsSet[0].numValues() : 0))
+                        * (this.weightsSet != null && this.weightsSet.length > 0 ? this.weightsSet[0].numValues() : 0)),
+                new Measurement("biasLearningRate", this.biasLearningRateOption.getValue()),
+                new Measurement("initialBias", this.initialBiasOption.getValue())
         };
     }
 
@@ -308,8 +346,15 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
         StringBuilder sb = new StringBuilder();
         sb.append("SoftmaxRegression (Cross-Entropy / Softmax)\n");
         sb.append("  Learning Rate: ").append(this.learningRate).append("\n");
+        sb.append("  Bias Learning Rate: ").append(this.biasLearningRateOption.getValue()).append("\n");
         sb.append("  L2 Regularization: ").append(this.l2Regularization).append("\n");
+        sb.append("  Initial Bias: ").append(this.initialBiasOption.getValue()).append("\n");
         sb.append("  Number of Classes: ").append(this.numClasses).append("\n");
+        if (this.biases != null) {
+            for (int k = 0; k < this.numClasses; k++) {
+                sb.append("  Bias[" + k + "]: ").append(this.biases[k]).append("\n");
+            }
+        }
         return sb.toString();
     }
 }
