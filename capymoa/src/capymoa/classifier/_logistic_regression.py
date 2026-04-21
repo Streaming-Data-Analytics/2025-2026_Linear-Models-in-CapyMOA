@@ -4,8 +4,23 @@ from capymoa._utils import build_cli_str_from_mapping_and_locals
 
 import moa.classifiers as moa_classifiers
 
-#TODO: add comments
 class LogisticRegression(MOAClassifier):
+    """Logistic Regression.
+
+    Logistic Regression is a linear classifier for binary classification, trained incrementally
+    using Stochastic Gradient Descent (SGD). It optimizes the log loss and allows for both L1 and
+    L2 regularization. The gradient can be clipped to avoid the exploding gradient problem.
+
+    >>> from capymoa.classifier import LogisticRegression
+    >>> from capymoa.datasets import ElectricityTiny
+    >>> from capymoa.evaluation import prequential_evaluation
+    >>>
+    >>> stream = ElectricityTiny()
+    >>> classifier = LogisticRegression(stream.get_schema())
+    >>> results = prequential_evaluation(stream, classifier, max_instances=1000)
+    >>> print(f"{results['cumulative'].accuracy():.1f}")
+    84.4
+    """
 
     def __init__(
         self,
@@ -18,6 +33,17 @@ class LogisticRegression(MOAClassifier):
         clip_gradient: float = 1e12,
         bias_init: float = 0.0
     ):
+        """Construct Logistic Regression.
+
+        :param schema: Stream schema.
+        :param random_seed: Seed for reproducibility (not used by this classifier).
+        :param learning_rate: The learning rate for the SGD optimizer.
+        :param bias_learning_rate: The learning rate for the intercept (bias).
+        :param l1_penalty: The L1 regularization weight.
+        :param l2_penalty: The L2 regularization weight.
+        :param clip_gradient: Maximum magnitude for gradients (gradient clipping).
+        :param bias_init: Initial value for the intercept (bias).
+        """
         mapping = {
             "learning_rate": "-r",
             "bias_learning_rate": "-b",
