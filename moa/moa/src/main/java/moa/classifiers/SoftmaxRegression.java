@@ -22,7 +22,6 @@ package moa.classifiers;
 
 import moa.classifiers.AbstractClassifier;
 import moa.classifiers.MultiClassClassifier;
-import moa.core.DoubleVector;
 import moa.core.Measurement;
 import moa.core.StringUtils;
 
@@ -113,9 +112,9 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
     // ---------------------------------------------------------------
 
     /**
-     * One weight vector per class. Index k corresponds to class k.
+     * One weight array per class. Index k corresponds to class k.
      */
-    protected DoubleVector[] weightsSet;
+    protected double[][] weights;
 
     /**
      * One bias (intercept) per class. Index k corresponds to class k.
@@ -146,7 +145,7 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
      */
     @Override
     public void resetLearningImpl() {
-        this.weightsSet = null;
+        this.weights = null;
         this.biases = null;
         this.numClasses = 0;
 
@@ -165,12 +164,12 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
         }
 
         int newNumClasses = requiredClasses;
-        DoubleVector[] newWeightsSet = new DoubleVector[newNumClasses];
+        double[][] newWeights = new double[newNumClasses][];
         double[] newBiases = new double[newNumClasses];
 
         // Copy existing state
-        if (this.weightsSet != null) {
-            System.arraycopy(this.weightsSet, 0, newWeightsSet, 0, this.numClasses);
+        if (this.weights != null) {
+            System.arraycopy(this.weights, 0, newWeights, 0, this.numClasses);
         }
         if (this.biases != null) {
             System.arraycopy(this.biases, 0, newBiases, 0, this.numClasses);
@@ -179,11 +178,11 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
         // Initialize new components
         double initialBias = this.initialBiasOption.getValue();
         for (int i = this.numClasses; i < newNumClasses; i++) {
-            newWeightsSet[i] = new DoubleVector();
+            newWeights[i] = new double[0];
             newBiases[i] = initialBias;
         }
 
-        this.weightsSet = newWeightsSet;
+        this.weights = newWeights;
         this.biases = newBiases;
         this.numClasses = newNumClasses;
     }
@@ -197,13 +196,13 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
         }
 
         double result = this.biases[classIndex];
-        DoubleVector classWeights = this.weightsSet[classIndex];
+        double[] classWeights = this.weights[classIndex];
 
         for (int i = 0; i < inst.numValues(); i++) {
             int idx = inst.index(i);
             if (idx != inst.classIndex() && !inst.isMissingSparse(i)) {
-                if (idx < classWeights.numValues()) {
-                    result += inst.valueSparse(i) * classWeights.getValue(idx);
+                if (idx < classWeights.length) {
+                    result += inst.valueSparse(i) * classWeights[idx];
                 }
             }
         }
@@ -254,14 +253,23 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
             // Gradient descent update of the bias (no regularization)
             this.biases[k] -= lrBias * lossGradient;
 
-            DoubleVector classWeights = this.weightsSet[k];
+            double[] classWeights = this.weights[k];
 
             // Update feature weights
             for (int i = 0; i < inst.numValues(); i++) {
                 int idx = inst.index(i);
                 if (idx != inst.classIndex() && !inst.isMissingSparse(i)) {
+                    // Resize weights array if necessary
+                    if (idx >= classWeights.length) {
+                        int newSize = Math.max(classWeights.length * 2, idx + 1);
+                        double[] newW = new double[newSize];
+                        System.arraycopy(classWeights, 0, newW, 0, classWeights.length);
+                        classWeights = newW;
+                        this.weights[k] = classWeights;
+                    }
+
                     double xi = inst.valueSparse(i);
-                    double currentWeight = classWeights.getValue(idx);
+                    double currentWeight = classWeights[idx];
 
                     // L2 Regularization
                     if (this.l2Regularization > 0.0) {
@@ -270,7 +278,7 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
 
                     // SGD Update
                     currentWeight -= this.learningRate * lossGradient * xi;
-                    classWeights.setValue(idx, currentWeight);
+                    classWeights[idx] = currentWeight;
                 }
             }
         }
@@ -327,7 +335,7 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
         return new Measurement[] {
                 new Measurement("num classes", this.numClasses),
                 new Measurement("num weights total", this.numClasses
-                        * (this.weightsSet != null && this.weightsSet.length > 0 ? this.weightsSet[0].numValues() : 0)),
+                        * (this.weights != null && this.weights.length > 0 ? this.weights[0].length : 0)),
                 new Measurement("biasLearningRate", this.biasLearningRateOption.getValue()),
                 new Measurement("initialBias", this.initialBiasOption.getValue())
         };
