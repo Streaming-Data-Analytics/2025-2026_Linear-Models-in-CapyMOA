@@ -20,8 +20,6 @@
 
 package moa.classifiers;
 
-import moa.classifiers.AbstractClassifier;
-import moa.classifiers.MultiClassClassifier;
 import moa.core.Measurement;
 import moa.core.StringUtils;
 
@@ -92,7 +90,7 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
             0.01, 0.0, Double.MAX_VALUE);
 
     /**
-     * L2 penalization hyper-parameter (weight decay).
+     * L2 penalization hyperparameter (weight decay).
      */
     public FloatOption l2Option = new FloatOption(
             "l2Penalty", 'l',
@@ -132,6 +130,16 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
     protected double learningRate;
 
     /**
+     * Cached bias learning rate hyperparameter.
+     */
+    protected double biasLearningRate;
+
+    /**
+     * Cached initial bias hyperparameter
+     */
+    protected double initialBias;
+
+    /**
      * Cached L2 regularization hyperparameter.
      */
     protected double l2Regularization;
@@ -152,6 +160,8 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
         // Read hyperparameters
         this.learningRate = this.learningRateOption.getValue();
         this.l2Regularization = this.l2Option.getValue();
+        this.biasLearningRate = this.biasLearningRateOption.getValue();
+        this.initialBias = this.initialBiasOption.getValue();
     }
 
     /**
@@ -163,9 +173,8 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
             return;
         }
 
-        int newNumClasses = requiredClasses;
-        double[][] newWeights = new double[newNumClasses][];
-        double[] newBiases = new double[newNumClasses];
+        double[][] newWeights = new double[requiredClasses][];
+        double[] newBiases = new double[requiredClasses];
 
         // Copy existing state
         if (this.weights != null) {
@@ -176,15 +185,15 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
         }
 
         // Initialize new components
-        double initialBias = this.initialBiasOption.getValue();
-        for (int i = this.numClasses; i < newNumClasses; i++) {
+        double initialBias = this.initialBias;
+        for (int i = this.numClasses; i < requiredClasses; i++) {
             newWeights[i] = new double[0];
             newBiases[i] = initialBias;
         }
 
         this.weights = newWeights;
         this.biases = newBiases;
-        this.numClasses = newNumClasses;
+        this.numClasses = requiredClasses;
     }
 
     /**
@@ -244,7 +253,7 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
         }
 
         // 3. Update weights and biases for each class
-        double lrBias = this.biasLearningRateOption.getValue();
+        double lrBias = this.biasLearningRate;
 
         for (int k = 0; k < this.numClasses; k++) {
             double target = (k == targetClass) ? 1.0 : 0.0;
@@ -336,8 +345,8 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
                 new Measurement("num classes", this.numClasses),
                 new Measurement("num weights total", this.numClasses
                         * (this.weights != null && this.weights.length > 0 ? this.weights[0].length : 0)),
-                new Measurement("biasLearningRate", this.biasLearningRateOption.getValue()),
-                new Measurement("initialBias", this.initialBiasOption.getValue())
+                new Measurement("biasLearningRate", this.biasLearningRate),
+                new Measurement("initialBias", this.initialBias)
         };
     }
 
@@ -354,9 +363,9 @@ public class SoftmaxRegression extends AbstractClassifier implements MultiClassC
         StringBuilder sb = new StringBuilder();
         sb.append("SoftmaxRegression (Cross-Entropy / Softmax)\n");
         sb.append("  Learning Rate: ").append(this.learningRate).append("\n");
-        sb.append("  Bias Learning Rate: ").append(this.biasLearningRateOption.getValue()).append("\n");
+        sb.append("  Bias Learning Rate: ").append(this.biasLearningRate).append("\n");
         sb.append("  L2 Regularization: ").append(this.l2Regularization).append("\n");
-        sb.append("  Initial Bias: ").append(this.initialBiasOption.getValue()).append("\n");
+        sb.append("  Initial Bias: ").append(this.initialBias).append("\n");
         sb.append("  Number of Classes: ").append(this.numClasses).append("\n");
         if (this.biases != null) {
             for (int k = 0; k < this.numClasses; k++) {
