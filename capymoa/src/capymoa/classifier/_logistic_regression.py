@@ -55,11 +55,8 @@ class LogisticRegression(MOAClassifier):
         config_str = build_cli_str_from_mapping_and_locals(mapping, locals())
 
         super(LogisticRegression, self).__init__(
-            moa_learner=moa_classifiers.LogisticRegression,
+            moa_learner=moa_classifiers.LogisticRegressionClassifier,
             schema=schema,
             CLI=config_str,
             random_seed=random_seed,
         )
-
-    def __str__(self):
-        return "LogisticRegression CapyMOA Classifier"
