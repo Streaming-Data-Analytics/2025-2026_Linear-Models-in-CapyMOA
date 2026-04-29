@@ -19,6 +19,7 @@ class LogisticRegression(MOAClassifier):
     >>> classifier = LogisticRegression(stream.get_schema())
     >>> results = prequential_evaluation(stream, classifier, max_instances=1000)
     >>> print(f"{results['cumulative'].accuracy():.1f}")
+    84.4
     """
 
     def __init__(
