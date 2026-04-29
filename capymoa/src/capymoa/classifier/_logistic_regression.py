@@ -62,4 +62,4 @@ class LogisticRegression(MOAClassifier):
         )
 
     def __str__(self):
-        return "LogisticRegression"
+        return "LogisticRegression CapyMOA Classifier"
