@@ -62,4 +62,4 @@ class SoftmaxRegression(MOAClassifier):
         )
 
     def __str__(self):
-        return "SoftmaxRegression CapyMOA Classifier"
+        return "SoftmaxRegression"
