@@ -1,23 +1,3 @@
-/*
- *    LogisticRegressionClassifier.java
- *    Copyright (C) 2026 Politecnico di Milano, Italy
- *    @author Christian Carstens (christianthomas.carstens@mail.polimi.it)
- *    @author Matteo Gatti (matteo7.gatti@mail.polimi.it)
- *
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 3 of the License, or
- *    (at your option) any later version.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program. If not, see <http://www.gnu.org/licenses/>.
- *    
- */
 package moa.classifiers;
 
 import com.github.javacliparser.FloatOption;
@@ -26,23 +6,9 @@ import moa.core.Measurement;
 import moa.core.StringUtils;
 
 /**
- * Logistic Regression Classifier.
- *
- * <p>Incremental on-line logistic regression for binary classification.</p>
- *
- * <p>Parameters:</p> <ul>
- * <li>-r : Learning rate for feature weights</li>
- * <li>-b : Learning rate for bias intercept</li>
- * <li>-l : L1 regularization penalty</li>
- * <li>-q : L2 regularization penalty</li>
- * <li>-c : Clip gradient threshold</li>
- * <li>-i : Initial bias value</li>
- * </ul>
- *
- * @author Matteo Gatti (matteo7.gatti@mail.polimi.it)
- * @version $Revision: 1 $
+ * Logistic regression for classification
  */
-public class LogisticRegressionClassifier extends AbstractClassifier {
+public class LogisticRegressionClassifier extends AbstractClassifier implements MultiClassClassifier{
 
     /**
      * Maximum number of weights to be printed by getModelDescription function
@@ -360,7 +326,6 @@ public class LogisticRegressionClassifier extends AbstractClassifier {
                 new Measurement("biasLearningRate", this.biasLearningRateOption.getValue()),
                 new Measurement("l1Penalty", this.l1Option.getValue()),
                 new Measurement("l2Penalty", this.l2Option.getValue()),
-                new Measurement("clipGradient", this.clipGradientOption.getValue()),
                 new Measurement("initialBias", this.initialBiasOption.getValue()),
                 new Measurement("bias", this.bias),
                 new Measurement("numWeights", getNumWeights()),
@@ -414,9 +379,6 @@ public class LogisticRegressionClassifier extends AbstractClassifier {
 
         StringUtils.appendIndented(out, indent + 1,
                 "l2Penalty: " + this.l2Option.getValue() + "\n");
-
-        StringUtils.appendIndented(out, indent + 1,
-                "clipGradient: " + this.clipGradientOption.getValue() + "\n");
 
         StringUtils.appendIndented(out, indent + 1,
                 "initialBias: " + this.initialBiasOption.getValue() + "\n");
