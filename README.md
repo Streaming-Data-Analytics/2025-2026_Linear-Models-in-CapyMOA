@@ -2,7 +2,7 @@
 
 Optional project of the [Streaming Data Analytics](https://emanueledellavalle.org/teaching/streaming-data-analytics-2025-26/) course provided by [Politecnico di Milano](https://www11.ceda.polimi.it/schedaincarico/schedaincarico/controller/scheda_pubblica/SchedaPublic.do?&evn_default=evento&c_classe=837284&__pj0=0&__pj1=36cd41e96fcd065c47b49d18e46e3110).
 
-Students: Christian Thomas Carstens Nunez and Matteo Gatti
+Students: Christian Carstens and Matteo Gatti
 
 ## Project Overview
 This project focuses on extending **CapyMOA** by integrating additional **linear models** from the **River** library.  
