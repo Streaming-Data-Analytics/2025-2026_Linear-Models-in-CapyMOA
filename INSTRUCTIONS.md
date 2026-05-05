@@ -9,6 +9,23 @@ Before starting, ensure you have the following installed on your system:
 - **Python** (3.8 or higher)
 - **Maven** (for building the custom MOA Java codebase)
 
+## Project Structure
+
+Here is an overview of the main folders and files in this repository:
+
+```
+2025-2026_Linear-Models-in-CapyMOA/
+├── INSTRUCTIONS.md
+├── README.md
+├── requirements.txt
+├── capymoa/
+│   ├── notebooks/               # Tutorial notebooks for CapyMOA
+│   └── src/capymoa/classifier/  # CapyMOA Python wrappers for the linear models
+├── capymoa_vs_river/            # Jupyter notebooks for cross-framework comparison and performance analysis
+└── moa/
+    └── moa/src/main/java/moa/classifiers/ # Custom MOA Java implementations (Logistic & Softmax Regression)
+```
+
 ## Step 1: Build the Custom MOA Project
 
 This project extends the standard MOA models. You first need to compile the custom Java code using Maven.
