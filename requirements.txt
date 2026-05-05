@@ -1,0 +1,8 @@
+capymoa
+river
+scikit-learn
+matplotlib
+numpy
+pandas
+tabulate
+jupyter
