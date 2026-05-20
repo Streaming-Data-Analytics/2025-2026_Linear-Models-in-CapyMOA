@@ -22,6 +22,7 @@ Here is an overview of the main folders and files in this repository:
 │   ├── notebooks/               # Tutorial notebooks for CapyMOA
 │   └── src/capymoa/classifier/  # CapyMOA Python wrappers for the linear models
 ├── capymoa_vs_river/            # Jupyter notebooks for cross-framework comparison and performance analysis
+└── deliverables/                # Project presentation
 └── moa/
     └── moa/src/main/java/moa/classifiers/ # Custom MOA Java implementations (Logistic & Softmax Regression)
 ```
