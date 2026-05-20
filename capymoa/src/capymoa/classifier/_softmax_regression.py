@@ -1,5 +1,4 @@
 from __future__ import annotations
-import typing
 
 from capymoa.base import MOAClassifier
 from capymoa.stream import Schema
@@ -28,8 +27,8 @@ class SoftmaxRegression(MOAClassifier):
 
     def __init__(
         self,
-        schema: typing.Union[Schema, None] = None,
-        random_seed: int = 0,
+        schema: Schema | None = None,
+        random_seed: int = 0,  # not used
         learning_rate: float = 0.01,
         bias_learning_rate: float = 0.01,
         l2_penalty: float = 0.0,
